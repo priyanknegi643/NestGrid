@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NestGrid — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080C10;
+    --surface: rgba(13,18,28,0.85);
+    --border: rgba(99,102,241,0.15);
+    --border-hover: rgba(99,102,241,0.4);
+    --text: #EEF0F6;
+    --muted: #6B7280;
+    --primary: #6366F1;
+    --primary-glow: rgba(99,102,241,0.3);
+    --green: #22C55E;
+    --green-glow: rgba(34,197,94,0.25);
+    --red: #F43F5E;
+    --amber: #F59E0B;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Animated background */
+  .bg-orbs {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    animation: drift 12s ease-in-out infinite alternate;
+  }
+  .orb-1 { width:400px;height:400px;background:rgba(99,102,241,0.12);top:-100px;left:-100px;animation-delay:0s; }
+  .orb-2 { width:300px;height:300px;background:rgba(34,197,94,0.08);bottom:-80px;right:-80px;animation-delay:4s; }
+  .orb-3 { width:250px;height:250px;background:rgba(244,63,94,0.06);top:50%;left:50%;animation-delay:8s; }
+
+  @keyframes drift {
+    from { transform: translate(0,0) scale(1); }
+    to   { transform: translate(30px,20px) scale(1.05); }
+  }
+
+  /* Grid overlay */
+  body::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image:
+      linear-gradient(rgba(99,102,241,0.03) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(99,102,241,0.03) 1px,transparent 1px);
+    background-size:60px 60px;
+    z-index:0;
+    pointer-events:none;
+  }
+
+  /* === WRAPPER === */
+  .auth-wrapper {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 480px;
+    padding: 20px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(30px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* === CARD === */
+  .auth-card {
+    background: var(--surface);
+    backdrop-filter: blur(30px);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  /* === LOGO === */
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--primary), var(--green));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 8px 20px var(--primary-glow);
+  }
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #fff 40%, var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  /* === ROLE TOGGLE === */
+  .role-toggle {
+    display: flex;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+  .role-btn {
+    flex: 1;
+    padding: 9px 12px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .role-btn.active {
+    background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(34,197,94,0.15));
+    color: var(--text);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border: 1px solid var(--border-hover);
+  }
+
+  /* === TAB SWITCH (Login / Signup) === */
+  .tab-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .tab-btn.active { color: var(--text); }
+  .tab-btn::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 50%; right: 50%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--green));
+    border-radius: 2px;
+    transition: left 0.3s, right 0.3s;
+  }
+  .tab-btn.active::after { left: 0; right: 0; }
+
+  /* === FORMS === */
+  .form-section { display: none; }
+  .form-section.active { display: block; animation: fadeUp 0.3s ease; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .form-input:focus {
+    border-color: var(--border-hover);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+  }
+  .form-input::placeholder { color: var(--muted); }
+
+  /* === PASSWORD WRAPPER === */
+  .pw-wrap { position: relative; }
+  .pw-wrap .form-input { padding-right: 44px; }
+  .pw-toggle {
+    position: absolute;
+    right: 12px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    font-size: 16px; padding: 4px;
+  }
+
+  /* === SUBMIT BTN === */
+  .submit-btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, var(--primary), #4F46E5);
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 8px 24px var(--primary-glow);
+    position: relative;
+    overflow: hidden;
+  }
+  .submit-btn::before {
+    content:'';
+    position:absolute;
+    top:0;left:-100%;width:100%;height:100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s;
+  }
+  .submit-btn:hover::before { left:100%; }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px var(--primary-glow); }
+  .submit-btn:active { transform: translateY(0); }
+
+  /* === DIVIDER === */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 20px 0;
+    color: var(--muted); font-size: 12px;
+  }
+  .divider::before,.divider::after {
+    content:''; flex:1;
+    height:1px; background: var(--border);
+  }
+
+  /* === TOAST === */
+  .toast {
+    position: fixed;
+    top: 24px; right: 24px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 9999;
+    animation: toastIn 0.3s ease;
+    display: none;
+    align-items: center; gap: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .toast.success { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ADE80; display: flex; }
+  .toast.error   { background: rgba(244,63,94,0.15);  border: 1px solid rgba(244,63,94,0.3);  color: #FB7185; display: flex; }
+  @keyframes toastIn {
+    from { opacity:0; transform:translateX(20px); }
+    to   { opacity:1; transform:translateX(0); }
+  }
+
+  /* === FOOTER NOTE === */
+  .auth-note {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .auth-note a { color: var(--primary); text-decoration: none; }
+  .auth-note a:hover { text-decoration: underline; }
+
+  /* === OWNER BADGE === */
+  .owner-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--amber);
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  /* === USER BADGE === */
+  .user-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.25);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--green);
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  /* === HERO TEXT === */
+  .hero-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+  }
+  .hero-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+
+    <!-- Logo -->
+    <div class="logo-row">
+      <div class="logo-icon">🏠</div>
+      <div class="logo-text">NestGrid</div>
+    </div>
+
+    <!-- Role Toggle -->
+    <div class="role-toggle">
+      <button class="role-btn active" onclick="setRole('user')" id="roleUser">
+        🧑‍💼 I'm a Tenant
+      </button>
+      <button class="role-btn" onclick="setRole('owner')" id="roleOwner">
+        🏢 I'm an Owner
+      </button>
+    </div>
+
+    <!-- Dynamic badge -->
+    <div id="roleBadge" class="user-badge">🔍 Find your perfect PG or Flat</div>
+
+    <!-- Hero text -->
+    <div class="hero-text" id="heroText">Welcome back</div>
+    <div class="hero-sub" id="heroSub">Sign in to discover your ideal accommodation</div>
+
+    <!-- Tab Switch -->
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="setTab('login')" id="tabLogin">Login</button>
+      <button class="tab-btn"        onclick="setTab('signup')" id="tabSignup">Sign Up</button>
+    </div>
+
+    <!-- ===== LOGIN ===== -->
+    <div class="form-section active" id="loginForm">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="loginEmail" type="email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="pw-wrap">
+          <input class="form-input" id="loginPass" type="password" placeholder="••••••••">
+          <button class="pw-toggle" onclick="togglePw('loginPass',this)">👁</button>
+        </div>
+      </div>
+      <button class="submit-btn" onclick="handleLogin()">Login →</button>
+    </div>
+
+    <!-- ===== SIGNUP ===== -->
+    <div class="form-section" id="signupForm">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" id="signupName" type="text" placeholder="Your full name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="signupEmail" type="email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <input class="form-input" id="signupPhone" type="tel" placeholder="+91 00000 00000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="pw-wrap">
+          <input class="form-input" id="signupPass" type="password" placeholder="Min 6 characters">
+          <button class="pw-toggle" onclick="togglePw('signupPass',this)">👁</button>
+        </div>
+      </div>
+      <button class="submit-btn" onclick="handleSignup()">Create Account →</button>
+    </div>
+
+  </div>
+
+  <div class="auth-note">
+    By continuing, you agree to NestGrid's <a href="#">Terms</a> &amp; <a href="#">Privacy Policy</a>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STATE =====
+let currentRole = 'user';
+let currentTab  = 'login';
+
+// Fake in-memory user store
+const users = {
+  user: [], owner: []
+};
+
+// ===== ROLE =====
+function setRole(role) {
+  currentRole = role;
+  document.getElementById('roleUser').classList.toggle('active', role==='user');
+  document.getElementById('roleOwner').classList.toggle('active', role==='owner');
+
+  const badge = document.getElementById('roleBadge');
+  const heroText = document.getElementById('heroText');
+  const heroSub = document.getElementById('heroSub');
+
+  if (role === 'owner') {
+    badge.className = 'owner-badge';
+    badge.innerHTML = '🏢 List & manage your properties';
+    heroText.textContent = currentTab === 'login' ? 'Owner Portal' : 'Join as Owner';
+    heroSub.textContent = 'Manage your PGs and reach thousands of tenants';
+  } else {
+    badge.className = 'user-badge';
+    badge.innerHTML = '🔍 Find your perfect PG or Flat';
+    heroText.textContent = currentTab === 'login' ? 'Welcome back' : 'Create account';
+    heroSub.textContent = 'Sign in to discover your ideal accommodation';
+  }
+}
+
+// ===== TABS =====
+function setTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabLogin').classList.toggle('active',  tab==='login');
+  document.getElementById('tabSignup').classList.toggle('active', tab==='signup');
+  document.getElementById('loginForm').classList.toggle('active',  tab==='login');
+  document.getElementById('signupForm').classList.toggle('active', tab==='signup');
+
+  const heroText = document.getElementById('heroText');
+  if (tab === 'login') {
+    heroText.textContent = currentRole === 'owner' ? 'Owner Portal' : 'Welcome back';
+  } else {
+    heroText.textContent = currentRole === 'owner' ? 'Join as Owner' : 'Create account';
+  }
+}
+
+// ===== PW TOGGLE =====
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type='text';  btn.textContent='🙈'; }
+  else                          { inp.type='password'; btn.textContent='👁'; }
+}
+
+// ===== TOAST =====
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.className = `toast ${type}`;
+  t.innerHTML = (type==='success' ? '✅' : '❌') + ' ' + msg;
+  t.style.display = 'flex';
+  setTimeout(()=>{ t.style.display='none'; }, 3000);
+}
+
+// ===== LOGIN =====
+function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+
+  if (!email || !pass) return showToast('Please fill all fields', 'error');
+
+  const store = users[currentRole];
+  const found = store.find(u => u.email===email && u.pass===pass);
+
+  if (!found) {
+    // Check demo accounts
+    if (currentRole==='user' && email==='user@demo.com' && pass==='demo123') {
+      goTo('index.html', { role:'user', name:'Demo User', email });
+      return;
+    }
+    if (currentRole==='owner' && email==='owner@demo.com' && pass==='demo123') {
+      goTo('owner.html', { role:'owner', name:'Demo Owner', email });
+      return;
+    }
+    return showToast('Invalid credentials', 'error');
+  }
+
+  showToast(`Welcome back, ${found.name}!`);
+  setTimeout(()=>{
+    goTo(currentRole==='owner' ? 'owner.html' : 'index.html', found);
+  }, 800);
+}
+
+// ===== SIGNUP =====
+function handleSignup() {
+  const name  = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const phone = document.getElementById('signupPhone').value.trim();
+  const pass  = document.getElementById('signupPass').value;
+
+  if (!name||!email||!pass) return showToast('Please fill all required fields','error');
+  if (pass.length < 6)      return showToast('Password must be at least 6 characters','error');
+
+  const store = users[currentRole];
+  if (store.find(u=>u.email===email)) return showToast('Email already registered','error');
+
+  const user = { name, email, phone, pass, role: currentRole };
+  store.push(user);
+
+  showToast(`Account created! Welcome, ${name} 🎉`);
+  setTimeout(()=>{
+    goTo(currentRole==='owner' ? 'owner.html' : 'index.html', user);
+  }, 1000);
+}
+
+// ===== REDIRECT =====
+function goTo(page, userData) {
+  sessionStorage.setItem('nestgrid_user', JSON.stringify(userData));
+  window.location.href = page;
+}
+</script>
+</body>
+</html>
