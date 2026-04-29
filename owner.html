@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NestGrid — Owner Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+/* basic theme */
+:root{
+ --bg:#080C10;--surface:rgba(13,18,28,0.9);--border:rgba(99,102,241,0.15);
+ --border-hover:rgba(99,102,241,0.4);--text:#EEF0F6;--muted:#6B7280;
+ --primary:#6366F1;--primary-glow:rgba(99,102,241,0.25);
+ --green:#22C55E;--amber:#F59E0B;--red:#F43F5E;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+ font-family:'DM Sans',sans-serif;
+ background:var(--bg);
+ color:var(--text);
+ min-height:100vh;
+ display:flex;
+ flex-direction:column;
+}
+
+/* layout */
+.nav{
+ display:flex;
+ justify-content:space-between;
+ padding:16px 32px;
+ background:rgba(8,12,16,0.8);
+ border-bottom:1px solid var(--border);
+}
+
+.owner-sidebar{
+ width:380px;
+ background:var(--surface);
+ border-right:1px solid var(--border);
+ overflow-y:auto;
+}
+
+.main{
+ flex:1;
+ display:flex;
+}
+
+/* small UI bits */
+.form-input{
+ width:100%;
+ padding:10px;
+ background:rgba(0,0,0,0.4);
+ border:1px solid var(--border);
+ border-radius:10px;
+ color:var(--text);
+}
+
+.submit-btn{
+ width:100%;
+ padding:12px;
+ border:none;
+ border-radius:10px;
+ background:var(--primary);
+ color:white;
+ cursor:pointer;
+}
+
+/* map */
+#ownerMap{
+ flex:1;
+ min-height:calc(100vh - 65px);
+}
+
+/* toast */
+.toast{
+ position:fixed;
+ top:20px;
+ right:20px;
+ padding:12px;
+ border-radius:10px;
+ display:none;
+}
+</style>
+</head>
+
+<body>
+
+<!-- top nav -->
+<nav class="nav">
+  <div>🏠 NestGrid</div>
+  <div>
+    <span id="navUser">Owner</span>
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="main">
+
+  <!-- sidebar -->
+  <div class="owner-sidebar">
+
+    <!-- add listing -->
+    <div id="tabAdd">
+      <h3>Add Property</h3>
+
+      <input class="form-input" id="pgName" placeholder="Name">
+      <input class="form-input" id="pgPrice" type="number" placeholder="Price">
+
+      <input class="form-input" id="pgLat" placeholder="Latitude">
+      <input class="form-input" id="pgLng" placeholder="Longitude">
+
+      <button class="submit-btn" onclick="addListing()">Publish</button>
+    </div>
+
+    <!-- listings -->
+    <div id="tabListings">
+      <h3>Your Listings</h3>
+      <div id="myListings"></div>
+    </div>
+
+  </div>
+
+  <!-- map -->
+  <div style="position:relative;flex:1;">
+    <div id="ownerMap"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+
+// api url
+const API='http://localhost:8080/api';
+
+// auth check
+let currentUser=null,authToken=null;
+try{
+ currentUser=JSON.parse(sessionStorage.getItem('nestgrid_user')||'null');
+ authToken=sessionStorage.getItem('nestgrid_token');
+}catch(e){}
+
+if(!currentUser||currentUser.role!=='OWNER'||!authToken){
+ window.location.href='auth.html';
+}
+
+// logout
+function logout(){
+ sessionStorage.clear();
+ window.location.href='auth.html';
+}
+
+// api helper
+async function apiFetch(path,options={}){
+ const res=await fetch(API+path,{
+  ...options,
+  headers:{
+   'Content-Type':'application/json',
+   'Authorization':`Bearer ${authToken}`
+  }
+ });
+ if(res.status===401){logout();return null;}
+ return res.ok?res.json():null;
+}
+
+// map init
+const map=L.map('ownerMap').setView([28.61,77.20],13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// click map to set coords
+map.on('click',e=>{
+ document.getElementById('pgLat').value=e.latlng.lat.toFixed(5);
+ document.getElementById('pgLng').value=e.latlng.lng.toFixed(5);
+});
+
+// state
+let myListings=[];
+
+// load listings
+async function loadMyListings(){
+ const data=await apiFetch('/accommodations/my');
+ myListings=data||[];
+ renderListings();
+}
+
+// render list
+function renderListings(){
+ const box=document.getElementById('myListings');
+
+ if(!myListings.length){
+  box.innerHTML='No listings yet';
+  return;
+ }
+
+ box.innerHTML=myListings.map(pg=>`
+  <div>
+    <b>${pg.name}</b><br>
+    ₹${pg.price}
+    <button onclick="deleteListing(${pg.id})">Delete</button>
+  </div>
+ `).join('');
+}
+
+// add listing
+async function addListing(){
+ const name=document.getElementById('pgName').value;
+ const price=+document.getElementById('pgPrice').value;
+ const lat=+document.getElementById('pgLat').value;
+ const lng=+document.getElementById('pgLng').value;
+
+ if(!name||!price||!lat||!lng){
+  showToast('fill all fields');
+  return;
+ }
+
+ const res=await apiFetch('/accommodations',{
+  method:'POST',
+  body:JSON.stringify({name,price,lat,lng})
+ });
+
+ if(!res)return showToast('failed');
+
+ showToast('added');
+ loadMyListings();
+}
+
+// delete listing
+async function deleteListing(id){
+ await apiFetch(`/accommodations/${id}`,{method:'DELETE'});
+ loadMyListings();
+}
+
+// simple toast
+function showToast(msg){
+ const t=document.getElementById('toast');
+ t.textContent=msg;
+ t.style.display='block';
+ setTimeout(()=>t.style.display='none',2000);
+}
+
+// start
+loadMyListings();
+
+</script>
+</body>
+</html>
