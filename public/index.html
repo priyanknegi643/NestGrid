@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accommodation Finder</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 Accommodation Finder</h1>
+            <p class="subtitle">Find your perfect stay near campus</p>
+        </header>
+
+        <!-- Auth Section -->
+        <section id="auth-section" class="card">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="login">Login</button>
+                <button class="tab-btn" data-tab="signup">Signup</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active">
+                <h2>Login</h2>
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" required placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="Enter password">
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <div id="login-message" class="message"></div>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="auth-form">
+                <h2>Signup</h2>
+                <div class="form-group">
+                    <label for="signup-username">Username</label>
+                    <input type="text" id="signup-username" required placeholder="Choose a username">
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" required placeholder="Choose a password">
+                </div>
+                <button type="submit" class="btn btn-primary">Signup</button>
+                <div id="signup-message" class="message"></div>
+            </form>
+        </section>
+
+        <!-- Main App Section (hidden until logged in) -->
+        <section id="app-section" class="card hidden">
+            <div class="app-header">
+                <h2>Welcome, <span id="user-display"></span>!</h2>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </div>
+
+            <!-- Add Accommodations -->
+            <div class="subsection">
+                <h3>📍 Add Accommodations</h3>
+                <form id="add-accommodation-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="acc-name">Name</label>
+                            <input type="text" id="acc-name" required placeholder="Accommodation name">
+                        </div>
+                        <div class="form-group">
+                            <label for="acc-type">Type</label>
+                            <select id="acc-type" required>
+                                <option value="">Select type</option>
+                                <option value="PG">PG</option>
+                                <option value="Flat">Flat</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="acc-lat">Latitude</label>
+                            <input type="number" id="acc-lat" step="any" required placeholder="e.g., 30.3165">
+                        </div>
+                        <div class="form-group">
+                            <label for="acc-lon">Longitude</label>
+                            <input type="number" id="acc-lon" step="any" required placeholder="e.g., 78.0322">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="acc-rent">Rent (₹)</label>
+                            <input type="number" id="acc-rent" step="any" required placeholder="Monthly rent">
+                        </div>
+                        <div class="form-group">
+                            <label for="acc-rating">Rating</label>
+                            <input type="number" id="acc-rating" step="0.1" min="0" max="5" required placeholder="0-5">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Accommodation</button>
+                </form>
+                <div id="add-message" class="message"></div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="subsection">
+                <h3>🔍 Search Accommodations</h3>
+                <form id="search-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="search-radius">Radius (km)</label>
+                            <input type="number" id="search-radius" step="any" required placeholder="e.g., 5" value="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="search-type">Type</label>
+                            <select id="search-type" required>
+                                <option value="">Select type</option>
+                                <option value="PG">PG</option>
+                                <option value="Flat">Flat</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </form>
+                <div id="search-message" class="message"></div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="subsection">
+                <h3>📋 Results</h3>
+                <div id="results-container" class="results-grid"></div>
+            </div>
+
+            <!-- All Accommodations -->
+            <div class="subsection">
+                <h3>📝 All Added Accommodations</h3>
+                <button id="refresh-all-btn" class="btn btn-secondary">Refresh List</button>
+                <div id="all-accommodations" class="results-grid"></div>
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
